@@ -12,35 +12,35 @@ module.exports = (api, projectOptions) => {
   api.registerCommand("ftpdeploy", async args => {
     resetVars();
     if (!args.ftpCfgPath) {
-      console.log(chalk.gray("No config file path !"));
+      console.log(chalk.red("No config file path !"));
       return;
     }
     let fPath = path.join(process.env.VUE_CLI_CONTEXT, args.ftpCfgPath, "config.js");
     if (!fs.existsSync(fPath)) {
-      console.log(chalk.gray("ftpdeploy `config.js` not found"));
+      console.log(chalk.bgRed.white("ftpdeploy `config.js` not found"));
       return;
     }
     try {
       cfg = require(fPath);
     } catch (e) {
-      console.log(chalk.gray("Mulform config"));
+      console.log(chalk.bgRed.white("Mulform config"));
       return;
     }
 
     if (!process.env.ftpHost) {
-      console.log(chalk.gray("No `ftpHost` defined in .env"));
+      console.log(chalk.bgRed.white("No `ftpHost` defined in .env"));
       return;
     }
     if (!process.env.ftpPort) {
-      console.log(chalk.gray("No `ftpPort` defined in .env"));
+      console.log(chalk.bgRed.white("No `ftpPort` defined in .env"));
       return;
     }
     if (!process.env.ftpUsr) {
-      console.log(chalk.gray("No `ftpUsr` defined in .env"));
+      console.log(chalk.bgRed.white("No `ftpUsr` defined in .env"));
       return;
     }
     if (!process.env.ftpPwd) {
-      console.log(chalk.gray("No `ftpPwd` defined in .env"));
+      console.log(chalk.bgRed.white("No `ftpPwd` defined in .env"));
       return;
     }
     cfg["ftpHost"] = process.env.ftpHost;
@@ -56,29 +56,34 @@ module.exports = (api, projectOptions) => {
     //console.log(cfg);
 
     if (args.ftpHistPath) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath,"hist.json");
+      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, "hist.json");
       if (fs.existsSync(histPath)) hist = JSON.parse(fs.readFileSync(histPath, "utf8"));
     }
 
     ftp = await ftpInit(cfg);
     if (!ftp) {
-      console.log(chalk.gray("Error Connectting"));
+      console.log(chalk.bgRed.white("Error Connectting"));
       return;
     }
-    if (cfg["del"]) for (let i = 0; i < cfg["del"].length; i++) {
+    if (cfg["del"])
+      for (let i = 0; i < cfg["del"].length; i++) {
         await ftpDelDir(cfg["del"][i]);
       }
-    if (cfg["clear"]) for (let i = 0; i < cfg["clear"].length; i++) {
+    if (cfg["clear"])
+      for (let i = 0; i < cfg["clear"].length; i++) {
         let o = cfg["clear"][i];
         if (typeof o == "string") await ftpDelDir(o, null, "clear");
         else await ftpDelDir(o.dir, o.test, "clear");
       }
-    if (cfg["sync"]) for (let i = 0; i < cfg["sync"].length; i++) {
+    if (cfg["sync"]) {
+      await ftpMkRemoteBasePath();
+      for (let i = 0; i < cfg["sync"].length; i++) {
         await ftpSync(cfg["sync"][i]);
       }
+    }
     await ftpQuit();
     if (args.ftpHistPath && cfg["genHist"]) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath,"hist.json");
+      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, "hist.json");
       fs.writeFileSync(histPath, JSON.stringify(mdFive), "utf8");
     }
     resetVars();
@@ -162,7 +167,7 @@ async function doFtpUpload(localPath, remotePath) {
     await ftpMkDir(path.dirname(remotePath));
     ftp.put(localPath, remotePath, err => {
       if (err) {
-        console.log(chalk.gray(err));
+        console.log(chalk.bgRed.white(err));
         resolve(false);
         return;
       }
@@ -199,7 +204,7 @@ function doFtpDelFile(_target, test = null) {
     }
     ftp.raw("dele", target, err => {
       if (err) {
-        console.log(chalk.gray(err));
+        console.log(chalk.bgRed.white(err));
         resolve(false);
         return;
       }
@@ -213,7 +218,7 @@ async function doFtpDelEmptyDir(_dir) {
   return new Promise(async resolve => {
     ftp.raw("rmd", dir, err => {
       if (err) {
-        console.log(chalk.gray(err));
+        console.log(chalk.bgRed.white(err));
         resolve(false);
         return;
       }
@@ -254,6 +259,14 @@ async function ftpMkDir(_dir) {
   }
   return 0;
 }
+async function ftpMkRemoteBasePath() {
+  let dirs = cfg["remoteBasePath"].split(path.sep);
+  let incDir = "";
+  for (let i = 0; i < dirs.length; i++) {
+    incDir += dirs[i] + "/";
+    await doFtpMkDir(incDir);
+  }
+}
 function doFtpMkDir(dir) {
   return new Promise(resolve => {
     if (dir in avalDir) {
@@ -264,7 +277,7 @@ function doFtpMkDir(dir) {
       if (err) {
         ftp.raw("mkd", dir, err => {
           if (err) {
-            console.log(chalk.gray(err));
+            console.log(chalk.bgRed.white(err));
             resolve(false);
             return;
           }
@@ -294,7 +307,7 @@ function ftpInit(cfg) {
 function ftpQuit() {
   return new Promise(resolve => {
     ftp.raw("quit", (err, data) => {
-      if (err) console.log(chalk.gray(err));
+      if (err) console.log(chalk.bgRed.white(err));
       resolve();
     });
   });

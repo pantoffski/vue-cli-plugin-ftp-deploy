@@ -1,6 +1,6 @@
 {
   "name": "vue-cli-plugin-ftp-deploy",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "description": "vue-cli-plugin for deploying via ftp to remote server",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "url": "https://github.com/pantoffski/vue-cli-plugin-ftp-deploy/issues"
   },
   "homepage": "https://github.com/pantoffski/vue-cli-plugin-ftp-deploy#readme",
-  "devDependencies": {
+  "dependencies": {
     "chalk": "^2.4.1",
     "crypto": "^1.0.1",
     "jsftp": "^2.1.3",
