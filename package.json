@@ -1,0 +1,22 @@
+{
+  "name": "vue-cli-plugin-ftp-deploy",
+  "version": "0.1.0",
+  "description": "vue-cli-plugin for deploying via ftp to remote server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pantoffski/vue-cli-plugin-ftp-deploy.git"
+  },
+  "keywords": [
+    "vue-cli-plugin"
+  ],
+  "author": "Chaichana Nilwatchararang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pantoffski/vue-cli-plugin-ftp-deploy/issues"
+  },
+  "homepage": "https://github.com/pantoffski/vue-cli-plugin-ftp-deploy#readme"
+}
