@@ -8,14 +8,14 @@ module.exports = api => {
       {
         name: "ftpCfgPath",
         type: "input",
-        default: "/",
-        description: "`.ftpdeploy.config.js` location"
+        default: "/ftpdeploy/",
+        description: "`config.js` location"
       },
       {
         name: "ftpHistPath",
         type: "input",
-        default: "/",
-        description: "path to write `.ftpdeploy.hist.json`"
+        default: "/ftpdeploy/",
+        description: "path to write `hist.json`"
       },
       {
         name: "genHist",

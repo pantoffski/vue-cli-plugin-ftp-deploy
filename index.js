@@ -4,7 +4,6 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 const Ftp = require("jsftp");
-const async = require("async");
 const minimatch = require("minimatch");
 const IS_FILE = 0;
 const IS_DIR = 1;
@@ -16,9 +15,9 @@ module.exports = (api, projectOptions) => {
       console.log(chalk.gray("No config file path !"));
       return;
     }
-    let fPath = path.join(process.env.VUE_CLI_CONTEXT, args.ftpCfgPath, ".ftpdeploy.config.js");
+    let fPath = path.join(process.env.VUE_CLI_CONTEXT, args.ftpCfgPath, "config.js");
     if (!fs.existsSync(fPath)) {
-      console.log(chalk.gray("`.ftpdeploy.config.js` not found"));
+      console.log(chalk.gray("ftpdeploy `config.js` not found"));
       return;
     }
     try {
@@ -57,7 +56,7 @@ module.exports = (api, projectOptions) => {
     //console.log(cfg);
 
     if (args.ftpHistPath) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, ".ftpdeploy.hist.json");
+      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath,"hist.json");
       if (fs.existsSync(histPath)) hist = JSON.parse(fs.readFileSync(histPath, "utf8"));
     }
 
@@ -79,7 +78,7 @@ module.exports = (api, projectOptions) => {
       }
     await ftpQuit();
     if (args.ftpHistPath && cfg["genHist"]) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, ".ftpdeploy.hist.json");
+      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath,"hist.json");
       fs.writeFileSync(histPath, JSON.stringify(mdFive), "utf8");
     }
     resetVars();
