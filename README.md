@@ -54,6 +54,7 @@ module.exports = {
 };
 ```
 More info about [minimatch](https://www.npmjs.com/package/minimatch) here.
+
 More info about [glob pattern](https://www.npmjs.com/package/glob#glob-primer) here.
 
 ## Config.js Setting
@@ -68,10 +69,12 @@ More info about [glob pattern](https://www.npmjs.com/package/glob#glob-primer) h
 
 
 ## Vue UI Setting
-![Sample UI Image](https://i.imgur.com/sCrBEJe.jpg "Sample UI Image")
 | Parameters | Default Value | Detail |
 | ------ | ------ | ------ |
 | `config.js` location | /ftpdeploy/ | setting file |
 path to write `hist.json`  | /ftpdeploy/ | md5 of file content, use for upload changed file only mode |
 | gen file checksum | true | save md5 of uploaded files as hist.json|
 | upload diff file from hist only | true | will upload only changed file only|
+
+
+![Sample UI Image](https://i.imgur.com/sCrBEJe.jpg "Sample UI Image")
