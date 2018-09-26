@@ -1,6 +1,6 @@
 {
   "name": "vue-cli-plugin-ftp-deploy",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "vue-cli-plugin for deploying via ftp to remote server",
   "main": "index.js",
   "scripts": {

@@ -16,7 +16,7 @@ install it
 the plugin will generate `ftpdeploy` folder and `config.js` inside
 ## Before Use
 
-add this to your .env
+add this to your .env.local
 ```env
 ftpHost = your-ftp-host
 ftpPort = your-ftp-port
@@ -33,18 +33,34 @@ ftpUsr  = usr@localhost
 ftpPwd  = pwdpwdpwd
 ```
 
-## Usage
-edit `ftpdeploy/config.js`
+## Default Settings
+default `ftpdeploy/config.js`
 
 ```js
 module.exports = {
   localBasePath:"/",
+  remoteBasePath: "/",
+  sync: [
+    { src: "/dist", dest: "/" }
+  ]
+};
+```
+By default, will upload everything in /dist folder to base path of your remote server.
+
+## Usage
+add more settings in `ftpdeploy/config.js`
+
+```js
+module.exports = {
+  localBasePath: "/",
   remoteBasePath: "/test_ftp_deploy/",
-  del: ["/folder0/","/folder1", "folder2", "folder3/folder4"],
+  del: ["/folder0/", "/folder1", "folder2", "folder3/folder4"],
   // folder0, folder1, folder2, folder4 on remote server will be deleted
-  clear: ["toClear1", { dir: "toClear2", test: "*.js" }],
-  // folder toClear1 will be empty, folder toClear2's all .js files will be deleted
+  clear: ["folder5", { dir: "folder6", test: "*.js" }],
+  // folder5 will be empty, folder6's all .js files will be deleted
   // `test` use minimatch to match
+  create: ["folder7", "folder8/folder9"],
+  // create folder7, folder8, folder8/folder9
   sync: [
     { src: { dir: "/dist", ignore: "dist/css/**" }, dest: "/" },
     // `ignore` use glob to match
@@ -54,9 +70,8 @@ module.exports = {
 };
 ```
 More info about [minimatch](https://www.npmjs.com/package/minimatch) here.
-
 More info about [glob pattern](https://www.npmjs.com/package/glob#glob-primer) here.
-
+The plugin will delete, clear, create then upload.
 ## Config.js Setting
 
 | Parameters | Detail |
@@ -64,8 +79,9 @@ More info about [glob pattern](https://www.npmjs.com/package/glob#glob-primer) h
 | localBasePath | local path relative to project path |
 | remoteBasePath | remote path on the server |
 | del | array of directory to delete  |
-| clear | array of directory to clear it's content
-| sync | array of source <==> destination folder to sync  |
+| clear | array of directory to clear it's content |
+| create | array of directory to create  |
+| sync | array of source ==> destination folder to upload  |
 
 
 ## Vue UI Setting

@@ -7,7 +7,7 @@ const Ftp = require("jsftp");
 const minimatch = require("minimatch");
 const IS_FILE = 0;
 const IS_DIR = 1;
-let cfg, ftp, avalDir, hist, mdFive;
+let cfg, ftp, avalDir, avalFile, hist, mdFive;
 module.exports = (api, projectOptions) => {
   api.registerCommand("ftpdeploy", async args => {
     resetVars();
@@ -69,12 +69,18 @@ module.exports = (api, projectOptions) => {
       for (let i = 0; i < cfg["del"].length; i++) {
         await ftpDelDir(cfg["del"][i]);
       }
-    if (cfg["clear"])
-      for (let i = 0; i < cfg["clear"].length; i++) {
-        let o = cfg["clear"][i];
-        if (typeof o == "string") await ftpDelDir(o, null, "clear");
-        else await ftpDelDir(o.dir, o.test, "clear");
+    if (cfg["clear"]) for (let i = 0; i < cfg["clear"].length; i++) {
+      let o = cfg["clear"][i];
+      if (typeof o == "string") await ftpDelDir(o, null, "clear");
+      else await ftpDelDir(o.dir, o.test, "clear");
+    }
+    if (cfg["create"]) {
+      await ftpMkRemoteBasePath();
+      for (let i = 0; i < cfg["create"].length; i++) {
+        let o = cfg["create"][i];
+        if (typeof o == "string") await ftpMkDir(o);
       }
+    }
     if (cfg["sync"]) {
       await ftpMkRemoteBasePath();
       for (let i = 0; i < cfg["sync"].length; i++) {
@@ -94,6 +100,7 @@ function resetVars() {
   ftp = null;
   cfg = {};
   avalDir = {};
+  avalFile = {};
   hist = {};
   mdFive = {};
 }
@@ -137,7 +144,8 @@ async function ftpSync(o) {
 
   files = files.map(f => {
     return {
-      src: path.join(cfg["absBasePath"], f), dest: path
+      src: path.join(cfg["absBasePath"], f),
+      dest: path
         .join(cfg["remoteBasePath"], dest, f.replace(src, ""))
         .split(/[\\\/]/)
         .join("/")
@@ -159,7 +167,21 @@ async function doFtpUpload(localPath, remotePath) {
             .replace(/\n/g, "")
         )
         .digest("hex");
-    if (cfg["diffFileOnly"] && mdFive[remotePath] == hist[remotePath]) {
+    let dir = path.dirname(remotePath);
+    if (!avalFile[dir]) {
+      let ls = await ftpListDir(dir);
+      avalFile[dir] = true;
+      if (ls)
+        for (let i = 0; i < ls.length; i++) {
+          let target = path
+            .join(dir, ls[i].name)
+            .split(/[\\\/]/)
+            .join("/");
+          if (ls[i].type == IS_FILE) avalFile[target] = true;
+        }
+    }
+
+    if (cfg["diffFileOnly"] && avalFile[remotePath] && mdFive[remotePath] == hist[remotePath]) {
       resolve(false);
       return;
     }
@@ -312,8 +334,10 @@ function ftpQuit() {
   });
 }
 function absRemotePath(_dir) {
-  return _dir.indexOf(cfg.remoteBasePath) ? path
-    .join(cfg.remoteBasePath, _dir)
-    .split(/[\\\/]/)
-    .join("/") : _dir;
+  return _dir.indexOf(cfg.remoteBasePath)
+    ? path
+      .join(cfg.remoteBasePath, _dir)
+      .split(/[\\\/]/)
+      .join("/")
+    : _dir;
 }
