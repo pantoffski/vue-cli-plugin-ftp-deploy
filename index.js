@@ -109,14 +109,14 @@ async function ftpSync(o) {
     globOpt = {
       ignore: path
         .join(cfg["localBasePath"], o.src.ignore)
-        .split(path.sep)
+        .split(/[\\\/]/)
         .join("/")
     };
   }
 
   src = path
     .join(cfg["localBasePath"], src)
-    .split(path.sep)
+    .split(/[\\\/]/)
     .join("/");
   src = src.charAt(0) == "/" ? src.substr(1) : src;
   src = src.slice(-1) == "/" ? src.slice(0, -1) : src;
@@ -137,10 +137,9 @@ async function ftpSync(o) {
 
   files = files.map(f => {
     return {
-      src: path.join(cfg["absBasePath"], f),
-      dest: path
+      src: path.join(cfg["absBasePath"], f), dest: path
         .join(cfg["remoteBasePath"], dest, f.replace(src, ""))
-        .split(path.sep)
+        .split(/[\\\/]/)
         .join("/")
     };
   });
@@ -184,7 +183,7 @@ async function ftpDelDir(_dir, test = null, opType = "del") {
       for (let i = 0; i < ls.length; i++) {
         let target = path
           .join(dir, ls[i].name)
-          .split(path.sep)
+          .split(/[\\\/]/)
           .join("/");
         if (ls[i].type == IS_DIR) await ftpDelDir(target, test, opType);
         else await doFtpDelFile(target, test);
@@ -252,7 +251,7 @@ function ftpListDir(_dir) {
 async function ftpMkDir(_dir) {
   let dir = absRemotePath(_dir);
   let incDir = "";
-  let dirs = dir.split(path.sep);
+  let dirs = dir.split(/[\\\/]/);
   for (let i = 0; i < dirs.length; i++) {
     incDir += dirs[i] + "/";
     await doFtpMkDir(incDir);
@@ -260,7 +259,7 @@ async function ftpMkDir(_dir) {
   return 0;
 }
 async function ftpMkRemoteBasePath() {
-  let dirs = cfg["remoteBasePath"].split(path.sep);
+  let dirs = cfg["remoteBasePath"].split(/[\\\/]/);
   let incDir = "";
   for (let i = 0; i < dirs.length; i++) {
     incDir += dirs[i] + "/";
@@ -313,10 +312,8 @@ function ftpQuit() {
   });
 }
 function absRemotePath(_dir) {
-  return _dir.indexOf(cfg.remoteBasePath)
-    ? path
-      .join(cfg.remoteBasePath, _dir)
-      .split(path.sep)
-      .join("/")
-    : _dir;
+  return _dir.indexOf(cfg.remoteBasePath) ? path
+    .join(cfg.remoteBasePath, _dir)
+    .split(/[\\\/]/)
+    .join("/") : _dir;
 }
