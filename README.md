@@ -1,9 +1,22 @@
 # vue-cli-plugin-ftp-deploy
 vue-cli-plugin for deploying via ftp
 
-## Initialize
+## Installation
+via command line
+```sh
+vue add ftp-deploy
+```
+via Vue UI
+```
+Click Plugins -> Add plugin
+search for ftp-deploy
+install it
+*** don't forget to click 'Finish installation' to generate config file
+```
+the plugin will generate `ftpdeploy` folder and `config.js` inside
+## Before Use
 
-add this to .env
+add this to your .env
 ```env
 ftpHost = your-ftp-host
 ftpPort = your-ftp-port
@@ -28,15 +41,20 @@ module.exports = {
   localBasePath:"/",
   remoteBasePath: "/test_ftp_deploy/",
   del: ["/folder0/","/folder1", "folder2", "folder3/folder4"],
+  // folder0, folder1, folder2, folder4 on remote server will be deleted
   clear: ["toClear1", { dir: "toClear2", test: "*.js" }],
+  // folder toClear1 will be empty, folder toClear2's all .js files will be deleted
+  // `test` use minimatch to match
   sync: [
     { src: { dir: "/dist", ignore: "dist/css/**" }, dest: "/" },
+    // `ignore` use glob to match
     { src: "/api", dest: "/api/" },
     { src: "foo/cfg", dest: "/cfg" }
   ]
 };
 ```
-
+More info about [minimatch](https://www.npmjs.com/package/minimatch) here.
+More info about [glob pattern](https://www.npmjs.com/package/glob#glob-primer) here.
 
 ## Config.js Setting
 
@@ -50,7 +68,7 @@ module.exports = {
 
 
 ## Vue UI Setting
-
+![Sample UI Image](https://i.imgur.com/sCrBEJe.jpg "Sample UI Image")
 | Parameters | Default Value | Detail |
 | ------ | ------ | ------ |
 | `config.js` location | /ftpdeploy/ | setting file |
