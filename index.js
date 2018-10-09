@@ -5,6 +5,7 @@ const path = require("path");
 const glob = require("glob");
 const Ftp = require("jsftp");
 const minimatch = require("minimatch");
+const ABS_BASE_PATH = process.env.VUE_CLI_CONTEXT ? process.env.VUE_CLI_CONTEXT : process.cwd();
 const IS_FILE = 0;
 const IS_DIR = 1;
 let cfg, ftp, avalDir, avalFile, hist, mdFive;
@@ -15,7 +16,7 @@ module.exports = (api, projectOptions) => {
       console.log(chalk.red("No config file path !"));
       return;
     }
-    let fPath = path.join(process.env.VUE_CLI_CONTEXT, args.ftpCfgPath, "config.js");
+    let fPath = path.join(ABS_BASE_PATH, args.ftpCfgPath, "config.js");
     if (!fs.existsSync(fPath)) {
       console.log(chalk.bgRed.white("ftpdeploy `config.js` not found"));
       return;
@@ -50,7 +51,7 @@ module.exports = (api, projectOptions) => {
     cfg["remoteBasePath"] = (cfg["remoteBasePath"].charAt(0) == "/" ? "" : "/") + cfg["remoteBasePath"];
     cfg["remoteBasePath"] = cfg["remoteBasePath"].slice(-1) == "/" ? cfg["remoteBasePath"].slice(0, -1) : cfg["remoteBasePath"];
     cfg["localBasePath"] = cfg["localBasePath"] ? cfg["localBasePath"] : "/";
-    cfg["absBasePath"] = process.env.VUE_CLI_CONTEXT;
+    cfg["absBasePath"] = ABS_BASE_PATH;
     cfg["genHist"] = args.genHist ? true : false;
     cfg["diffFileOnly"] = args.diffFileOnly ? true : false;
     //console.log(cfg);
@@ -69,16 +70,17 @@ module.exports = (api, projectOptions) => {
       for (let i = 0; i < cfg["del"].length; i++) {
         await ftpDelDir(cfg["del"][i]);
       }
-    if (cfg["clear"]) for (let i = 0; i < cfg["clear"].length; i++) {
-      let o = cfg["clear"][i];
-      if (typeof o == "string") await ftpDelDir(o, null, "clear");
-      else await ftpDelDir(o.dir, o.test, "clear");
-    }
+    if (cfg["clear"])
+      for (let i = 0; i < cfg["clear"].length; i++) {
+        let o = cfg["clear"][i];
+        if (typeof o == "string") await ftpDelDir(o, null, "clear");
+        else await ftpDelDir(o.dir, o.test, "clear");
+      }
     if (cfg["create"]) {
       await ftpMkRemoteBasePath();
       for (let i = 0; i < cfg["create"].length; i++) {
         let o = cfg["create"][i];
-        if (typeof o == "string") await ftpMkDir(o);
+        await ftpMkDir(o);
       }
     }
     if (cfg["sync"]) {
@@ -271,13 +273,14 @@ function ftpListDir(_dir) {
   });
 }
 async function ftpMkDir(_dir) {
-  let dir = absRemotePath(_dir);
+  let dir = absRemotePath(typeof _dir == "string" ? _dir : _dir.dir);
   let incDir = "";
   let dirs = dir.split(/[\\\/]/);
   for (let i = 0; i < dirs.length; i++) {
     incDir += dirs[i] + "/";
     await doFtpMkDir(incDir);
   }
+  if (typeof _dir != "string") await doFtpChmod(dir, _dir.perm);
   return 0;
 }
 async function ftpMkRemoteBasePath() {
@@ -287,6 +290,20 @@ async function ftpMkRemoteBasePath() {
     incDir += dirs[i] + "/";
     await doFtpMkDir(incDir);
   }
+}
+function doFtpChmod(dir, perm) {
+  return new Promise(resolve => {
+    ftp.raw("site", "chmod", perm, dir, err => {
+      if (err) {
+        console.log(chalk.bgRed.white("chmod error"));
+        console.log(chalk.bgRed.white(err));
+        resolve(false);
+        return;
+      }
+      console.log(chalk.yellow("chmod :", perm, dir));
+      resolve(true);
+    });
+  });
 }
 function doFtpMkDir(dir) {
   return new Promise(resolve => {
