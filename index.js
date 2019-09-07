@@ -48,8 +48,12 @@ module.exports = (api, projectOptions) => {
     cfg["ftpPort"] = process.env.ftpPort;
     cfg["ftpUsr"] = process.env.ftpUsr;
     cfg["ftpPwd"] = process.env.ftpPwd;
-    cfg["remoteBasePath"] = (cfg["remoteBasePath"].charAt(0) == "/" ? "" : "/") + cfg["remoteBasePath"];
-    cfg["remoteBasePath"] = cfg["remoteBasePath"].slice(-1) == "/" ? cfg["remoteBasePath"].slice(0, -1) : cfg["remoteBasePath"];
+    cfg["remoteBasePath"] =
+      (cfg["remoteBasePath"].charAt(0) == "/" ? "" : "/") + cfg["remoteBasePath"];
+    cfg["remoteBasePath"] =
+      cfg["remoteBasePath"].slice(-1) == "/"
+        ? cfg["remoteBasePath"].slice(0, -1)
+        : cfg["remoteBasePath"];
     cfg["localBasePath"] = cfg["localBasePath"] ? cfg["localBasePath"] : "/";
     cfg["absBasePath"] = ABS_BASE_PATH;
     cfg["genHist"] = args.genHist ? true : false;
@@ -135,7 +139,7 @@ async function ftpSync(o) {
   }
   dest = src.charAt(0) == "/" ? dest.substr(1) : dest;
 
-  files = [src, src + "/**", src + "/.*"].reduce(function (acc, globString) {
+  files = [src, src + "/**", src + "/.*"].reduce(function(acc, globString) {
     var globFiles = glob.sync(globString, globOpt);
     return acc.concat(globFiles);
   }, []);
@@ -159,12 +163,13 @@ async function ftpSync(o) {
 }
 async function doFtpUpload(localPath, remotePath) {
   return new Promise(async resolve => {
+    let localFile = fs.readFileSync(localPath);
     if (cfg["genHist"])
       mdFive[remotePath] = crypto
         .createHash("md5")
         .update(
-          fs
-            .readFileSync(localPath, "utf8")
+          localFile
+            .toString("utf8")
             .replace(/\r/g, "")
             .replace(/\n/g, "")
         )
@@ -188,7 +193,7 @@ async function doFtpUpload(localPath, remotePath) {
       return;
     }
     await ftpMkDir(path.dirname(remotePath));
-    ftp.put(localPath, remotePath, err => {
+    ftp.put(localFile, remotePath, err => {
       if (err) {
         console.log(chalk.bgRed.white(err));
         resolve(false);
@@ -353,8 +358,8 @@ function ftpQuit() {
 function absRemotePath(_dir) {
   return _dir.indexOf(cfg.remoteBasePath)
     ? path
-      .join(cfg.remoteBasePath, _dir)
-      .split(/[\\\/]/)
-      .join("/")
+        .join(cfg.remoteBasePath, _dir)
+        .split(/[\\\/]/)
+        .join("/")
     : _dir;
 }
