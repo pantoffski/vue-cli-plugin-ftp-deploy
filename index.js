@@ -139,10 +139,10 @@ async function ftpSync(o) {
   }
   dest = src.charAt(0) == "/" ? dest.substr(1) : dest;
 
-  files = [src, src + "/**", src + "/.*"].reduce(function(acc, globString) {
+  files = [...new Set([src, src + "/**", src + "/.*", src + "/**/.*"].reduce(function(acc, globString) {
     var globFiles = glob.sync(globString, globOpt);
     return acc.concat(globFiles);
-  }, []);
+  }, []))];
 
   files = files.filter(f => {
     return fs.lstatSync(path.join(cfg["absBasePath"], f)).isFile();
