@@ -5,12 +5,14 @@ const path = require("path");
 const glob = require("glob");
 const Ftp = require("jsftp");
 const minimatch = require("minimatch");
-const ABS_BASE_PATH = process.env.VUE_CLI_CONTEXT ? process.env.VUE_CLI_CONTEXT : process.cwd();
+const ABS_BASE_PATH = process.env.VUE_CLI_CONTEXT
+  ? process.env.VUE_CLI_CONTEXT
+  : process.cwd();
 const IS_FILE = 0;
 const IS_DIR = 1;
 let cfg, ftp, avalDir, avalFile, hist, mdFive;
 module.exports = (api, projectOptions) => {
-  api.registerCommand("ftpdeploy", async args => {
+  api.registerCommand("ftpdeploy", async (args) => {
     resetVars();
     if (!args.ftpCfgPath) {
       console.log(chalk.red("No config file path !"));
@@ -44,12 +46,13 @@ module.exports = (api, projectOptions) => {
       console.log(chalk.bgRed.white("No `ftpPwd` defined in .env"));
       return;
     }
-    cfg["ftpHost"] = process.env.ftpHost;
-    cfg["ftpPort"] = process.env.ftpPort;
-    cfg["ftpUsr"] = process.env.ftpUsr;
-    cfg["ftpPwd"] = process.env.ftpPwd;
+    cfg["ftpHost"] = process.env.VUE_APP_ftpHost || process.env.ftpHost;
+    cfg["ftpPort"] = process.env.VUE_APP_ftpPort || process.env.ftpPort;
+    cfg["ftpUsr"] = process.env.VUE_APP_ftpUsr || process.env.ftpUsr;
+    cfg["ftpPwd"] = process.env.VUE_APP_ftpPwd || process.env.ftpPwd;
     cfg["remoteBasePath"] =
-      (cfg["remoteBasePath"].charAt(0) == "/" ? "" : "/") + cfg["remoteBasePath"];
+      (cfg["remoteBasePath"].charAt(0) == "/" ? "" : "/") +
+      cfg["remoteBasePath"];
     cfg["remoteBasePath"] =
       cfg["remoteBasePath"].slice(-1) == "/"
         ? cfg["remoteBasePath"].slice(0, -1)
@@ -61,8 +64,13 @@ module.exports = (api, projectOptions) => {
     //console.log(cfg);
 
     if (args.ftpHistPath) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, "hist.json");
-      if (fs.existsSync(histPath)) hist = JSON.parse(fs.readFileSync(histPath, "utf8"));
+      let histPath = path.join(
+        cfg["absBasePath"],
+        args.ftpHistPath,
+        "hist.json"
+      );
+      if (fs.existsSync(histPath))
+        hist = JSON.parse(fs.readFileSync(histPath, "utf8"));
     }
 
     ftp = await ftpInit(cfg);
@@ -95,7 +103,11 @@ module.exports = (api, projectOptions) => {
     }
     await ftpQuit();
     if (args.ftpHistPath && cfg["genHist"]) {
-      let histPath = path.join(cfg["absBasePath"], args.ftpHistPath, "hist.json");
+      let histPath = path.join(
+        cfg["absBasePath"],
+        args.ftpHistPath,
+        "hist.json"
+      );
       fs.writeFileSync(histPath, JSON.stringify(mdFive), "utf8");
     }
     resetVars();
@@ -123,7 +135,7 @@ async function ftpSync(o) {
       ignore: path
         .join(cfg["localBasePath"], o.src.ignore)
         .split(/[\\\/]/)
-        .join("/")
+        .join("/"),
     };
   }
 
@@ -134,27 +146,41 @@ async function ftpSync(o) {
   src = src.charAt(0) == "/" ? src.substr(1) : src;
   src = src.slice(-1) == "/" ? src.slice(0, -1) : src;
   if (globOpt.ignore) {
-    globOpt.ignore = globOpt.ignore.charAt(0) == "/" ? globOpt.ignore.substr(1) : globOpt.ignore;
-    globOpt.ignore = globOpt.ignore.slice(-1) == "/" ? globOpt.ignore.slice(0, -1) : globOpt.ignore;
+    globOpt.ignore =
+      globOpt.ignore.charAt(0) == "/"
+        ? globOpt.ignore.substr(1)
+        : globOpt.ignore;
+    globOpt.ignore =
+      globOpt.ignore.slice(-1) == "/"
+        ? globOpt.ignore.slice(0, -1)
+        : globOpt.ignore;
   }
   dest = src.charAt(0) == "/" ? dest.substr(1) : dest;
 
-  files = [...new Set([src, src + "/**", src + "/.*", src + "/**/.*"].reduce(function(acc, globString) {
-    var globFiles = glob.sync(globString, globOpt);
-    return acc.concat(globFiles);
-  }, []))];
+  files = [
+    ...new Set(
+      [src, src + "/**", src + "/.*", src + "/**/.*"].reduce(function (
+        acc,
+        globString
+      ) {
+        var globFiles = glob.sync(globString, globOpt);
+        return acc.concat(globFiles);
+      },
+      [])
+    ),
+  ];
 
-  files = files.filter(f => {
+  files = files.filter((f) => {
     return fs.lstatSync(path.join(cfg["absBasePath"], f)).isFile();
   });
 
-  files = files.map(f => {
+  files = files.map((f) => {
     return {
       src: path.join(cfg["absBasePath"], f),
       dest: path
         .join(cfg["remoteBasePath"], dest, f.replace(src, ""))
         .split(/[\\\/]/)
-        .join("/")
+        .join("/"),
     };
   });
   for (let i = 0; i < files.length; i++) {
@@ -162,16 +188,13 @@ async function ftpSync(o) {
   }
 }
 async function doFtpUpload(localPath, remotePath) {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve) => {
     let localFile = fs.readFileSync(localPath);
     if (cfg["genHist"])
       mdFive[remotePath] = crypto
         .createHash("md5")
         .update(
-          localFile
-            .toString("utf8")
-            .replace(/\r/g, "")
-            .replace(/\n/g, "")
+          localFile.toString("utf8").replace(/\r/g, "").replace(/\n/g, "")
         )
         .digest("hex");
     let dir = path.dirname(remotePath);
@@ -188,12 +211,16 @@ async function doFtpUpload(localPath, remotePath) {
         }
     }
 
-    if (cfg["diffFileOnly"] && avalFile[remotePath] && mdFive[remotePath] == hist[remotePath]) {
+    if (
+      cfg["diffFileOnly"] &&
+      avalFile[remotePath] &&
+      mdFive[remotePath] == hist[remotePath]
+    ) {
       resolve(false);
       return;
     }
     await ftpMkDir(path.dirname(remotePath));
-    ftp.put(localFile, remotePath, err => {
+    ftp.put(localFile, remotePath, (err) => {
       if (err) {
         console.log(chalk.bgRed.white(err));
         resolve(false);
@@ -206,7 +233,7 @@ async function doFtpUpload(localPath, remotePath) {
 }
 async function ftpDelDir(_dir, test = null, opType = "del") {
   let dir = absRemotePath(_dir);
-  return new Promise(async resolve => {
+  return new Promise(async (resolve) => {
     let ls = await ftpListDir(dir);
     if (ls) {
       for (let i = 0; i < ls.length; i++) {
@@ -225,12 +252,12 @@ async function ftpDelDir(_dir, test = null, opType = "del") {
 function doFtpDelFile(_target, test = null) {
   let target = absRemotePath(_target);
   let fName = path.basename(target);
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     if (test && !minimatch(fName, test)) {
       resolve(false);
       return;
     }
-    ftp.raw("dele", target, err => {
+    ftp.raw("dele", target, (err) => {
       if (err) {
         console.log(chalk.bgRed.white(err));
         resolve(false);
@@ -243,8 +270,8 @@ function doFtpDelFile(_target, test = null) {
 }
 async function doFtpDelEmptyDir(_dir) {
   let dir = absRemotePath(_dir);
-  return new Promise(async resolve => {
-    ftp.raw("rmd", dir, err => {
+  return new Promise(async (resolve) => {
+    ftp.raw("rmd", dir, (err) => {
       if (err) {
         console.log(chalk.bgRed.white(err));
         resolve(false);
@@ -257,8 +284,8 @@ async function doFtpDelEmptyDir(_dir) {
 }
 function ftpListDir(_dir) {
   let dir = absRemotePath(_dir);
-  return new Promise(resolve => {
-    ftp.raw("cwd", dir, err => {
+  return new Promise((resolve) => {
+    ftp.raw("cwd", dir, (err) => {
       if (err) {
         resolve(null);
         return;
@@ -269,7 +296,7 @@ function ftpListDir(_dir) {
           return;
         }
         var ret = [];
-        data.forEach(e => {
+        data.forEach((e) => {
           ret.push({ name: e.name, type: e.type });
         });
         resolve(ret);
@@ -297,8 +324,8 @@ async function ftpMkRemoteBasePath() {
   }
 }
 function doFtpChmod(dir, perm) {
-  return new Promise(resolve => {
-    ftp.raw("site", "chmod", perm, dir, err => {
+  return new Promise((resolve) => {
+    ftp.raw("site", "chmod", perm, dir, (err) => {
       if (err) {
         console.log(chalk.bgRed.white("chmod error"));
         console.log(chalk.bgRed.white(err));
@@ -311,14 +338,14 @@ function doFtpChmod(dir, perm) {
   });
 }
 function doFtpMkDir(dir) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     if (dir in avalDir) {
       resolve(true);
       return;
     }
-    ftp.raw("cwd", dir, err => {
+    ftp.raw("cwd", dir, (err) => {
       if (err) {
-        ftp.raw("mkd", dir, err => {
+        ftp.raw("mkd", dir, (err) => {
           if (err) {
             console.log(chalk.bgRed.white(err));
             resolve(false);
@@ -336,9 +363,9 @@ function doFtpMkDir(dir) {
   });
 }
 function ftpInit(cfg) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let _ftp = new Ftp({ host: cfg.ftpHost, port: cfg.ftpPort });
-    _ftp.auth(cfg.ftpUsr, cfg.ftpPwd, err => {
+    _ftp.auth(cfg.ftpUsr, cfg.ftpPwd, (err) => {
       if (err) {
         resolve(null);
       } else {
@@ -348,7 +375,7 @@ function ftpInit(cfg) {
   });
 }
 function ftpQuit() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     ftp.raw("quit", (err, data) => {
       if (err) console.log(chalk.bgRed.white(err));
       resolve();
