@@ -32,13 +32,22 @@ ftpUsr  = your-ftp-username
 ftpPwd  = your-ftp-password
 ```
 
+or 
+
+```env
+VUE_APP_ftpHost = your-ftp-host
+VUE_APP_ftpPort = your-ftp-port
+VUE_APP_ftpUsr  = your-ftp-username
+VUE_APP_ftpPwd  = your-ftp-password
+```
+
 example
 
 ```env
-ftpHost = 127.0.0.1
-ftpPort = 21
-ftpUsr  = usr@localhost
-ftpPwd  = pwdpwdpwd
+VUE_APP_ftpHost = 127.0.0.1
+VUE_APP_ftpPort = 21
+VUE_APP_ftpUsr  = usr@localhost
+VUE_APP_ftpPwd  = pwdpwdpwd
 ```
 
 ## Default Settings
@@ -127,4 +136,55 @@ or
 
 ```sh
 yarn deploy
+```
+
+## Deploy to Multiple Sites
+
+An example for different build configuration and different deploy target i.e. `site2`
+
+`.env.site2.local`
+
+```env
+NODE_ENV=production
+VUE_APP_ftpHost = 127.0.0.2
+VUE_APP_ftpPort = 21
+VUE_APP_ftpUsr  = usr2@localhost
+VUE_APP_ftpPwd  = pwd2pwd2pwd2
+```
+
+Add another `build` command to 'scripts' part of `package.json`
+to build with `site2` mode which will use above env file and set `/site2` as built destination.
+
+Add another `deploy` command to 'scripts' part of `package.json`
+to deploy with `site2` mode and use `/ftpdeploy_site2` as configuartion directory.
+
+```js
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "deploy": "vue-cli-service ftpdeploy --genHist --diffFileOnly --ftpCfgPath /ftpdeploy/ --ftpHistPath /ftpdeploy/",
+    "build:site2": "vue-cli-service build --mode site2 --dest site2",
+    "deploy:site2": "vue-cli-service ftpdeploy --mode site2 --genHist --diffFileOnly --ftpCfgPath /ftpdeploy_site2/ --ftpHistPath /ftpdeploy_site2/"
+  },
+```
+
+then duplicate `/ftpdeploy` or create another folder i.e. `/ftpdeploy_site2`
+and change `/ftpdeploy_site2/config.js` to 
+
+```js
+module.exports = {
+  localBasePath: "/",
+  remoteBasePath: "/",
+  sync: [{ src: "/site2", dest: "/" }]
+};
+```
+
+Now you can
+
+```sh
+npm run deploy:site2
+```
+or
+```sh
+npm run build:site2 && npm run deploy:site2
 ```

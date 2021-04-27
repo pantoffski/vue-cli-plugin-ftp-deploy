@@ -226,6 +226,8 @@ async function doFtpUpload(localPath, remotePath) {
         resolve(false);
         return;
       }
+      if (mdFive[remotePath] && hist[remotePath])
+        hist[remotePath] = mdFive[remotePath];
       console.log(chalk.green("up  :", remotePath));
       resolve(true);
     });
